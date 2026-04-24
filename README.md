@@ -24,90 +24,96 @@ En cuanto a sus partes principales, se pueden identificar los siguientes subsist
 
 ## Desarrollo de una incubadora a escala
 
-### Circuito Eléctrico Temperatura
-El subsistema de control de temperatura fue diseñado para mantener el interior de la incubadora dentro de un rango aproximado entre **36 °C y 37,5 °C**, tal como se exige en la práctica. Para ello, se utilizó un sensor **DHT22** conectado a una **ESP32**, encargada de adquirir la temperatura interna del prototipo y ejecutar la lógica de control.
+### Simulación del circuito de temperatura
+Con el fin de validar el comportamiento del sistema térmico, se desarrolló una simulación específica del circuito de temperatura en **Wokwi**. En esta simulación se representaron los elementos principales asociados al control térmico del prototipo: **ESP32**, **sensor DHT22**, **pantalla OLED**, **módulo relé**, **bombillo calefactor**, **ventilador** y **panel de LEDs**.
 
-El sistema implementado cuenta con dos actuadores principales: un **bombillo** empleado como elemento calefactor y un **ventilador** para la circulación de aire y disipación de calor cuando la temperatura supera el límite establecido. El bombillo se acciona mediante un **módulo relé**, mientras que el ventilador se alimenta desde la etapa de potencia implementada con **transformador, puente rectificador y regulación de tensión**. De esta manera, el prototipo reproduce el comportamiento básico de una incubadora neonatal a escala con control térmico de lazo cerrado.
+La lógica implementada permite identificar tres estados térmicos:
+- **Temperatura baja**: se activa el bombillo calefactor y se enciende el LED de baja temperatura.
+- **Temperatura en rango**: se enciende el LED verde para indicar condición adecuada.
+- **Temperatura alta**: se apaga el bombillo y se activa el ventilador para disipar calor.
 
-También se implementó un panel de **tres LEDs** para indicar el estado térmico del sistema:
-- **LED rojo**: temperatura baja.
-- **LED verde**: temperatura dentro del rango ideal.
-- **LED rojo / amarillo**: temperatura por encima del rango permitido.
+Esta simulación permitió comprobar de forma visual la interacción entre el sensor de temperatura, la unidad de control y los actuadores del sistema.
 
-#### Simulación del circuito de temperatura
 ![Simulación del circuito de temperatura en Wokwi](imagenes/simulacion_temperatura_wokwi.png)
 
-#### Montaje real del circuito de temperatura
-![Montaje real del sistema de temperatura](imagenes/montaje_temperatura_real.jpg)
+**Enlace a la simulación de temperatura:**  
+[Pegar aquí enlace de Wokwi - Temperatura](PEGAR_AQUI_ENLACE_WOKWI_TEMPERATURA)
 
 ---
 
-### Circuito Eléctrico que Mide Peso
-Para la medición de peso se empleó una **celda de carga** acoplada a un módulo **HX711**, el cual permite acondicionar y digitalizar la señal proveniente de la galga. Esta señal es procesada por la **ESP32**, la cual estima el peso aplicado y lo muestra en una **pantalla OLED**.
+### Simulación del sistema de peso
+De manera complementaria, se desarrolló una simulación independiente del sistema de medición de peso, con el objetivo de representar la adquisición de datos desde una **celda de carga** por medio del módulo **HX711**, y su posterior visualización en la **pantalla OLED**.
 
-Este subsistema se diseñó con el propósito de estimar el peso del neonato a escala dentro del prototipo, cumpliendo así con el requisito de la práctica de contar con un sistema de medición de peso mostrado en pantalla. Aunque durante las pruebas experimentales la calibración no alcanzó la precisión esperada, se logró integrar satisfactoriamente la arquitectura general de adquisición, procesamiento y visualización de la variable.
+En esta simulación se incluyeron la **ESP32**, la **pantalla OLED** y el **módulo HX711** como elementos principales. La finalidad de este montaje fue mostrar la arquitectura general de medición de peso implementada en el prototipo, así como la relación entre el sensor de fuerza y la etapa de procesamiento digital.
 
-#### Simulación del sistema de peso
+Aunque la calibración del sistema en el montaje real presentó limitaciones, la simulación permitió documentar claramente la estructura del sistema de pesaje y su integración con el microcontrolador.
+
 ![Simulación del sistema de peso con HX711](imagenes/simulacion_peso_wokwi.png)
 
-#### Montaje real del sistema de peso
-![Montaje real de la galga y HX711](imagenes/montaje_peso_real.jpg)
+**Enlace a la simulación de peso:**  
+[Pegar aquí enlace de Wokwi - Peso](PEGAR_AQUI_ENLACE_WOKWI_PESO)
 
 ---
 
-### Código para el funcionamiento y control
-El funcionamiento del sistema fue implementado en la **ESP32**, integrando las rutinas de lectura de sensores, control de actuadores y visualización de variables en tiempo real. El código desarrollado permite:
+### Simulación general del sistema
+Finalmente, se elaboró una simulación general del prototipo en **Wokwi**, integrando en un mismo entorno los módulos principales del sistema presentado en laboratorio:
+- **ESP32** como unidad de adquisición y control.
+- **Pantalla OLED** para visualización de temperatura y peso.
+- **Sensor DHT22** para medición de temperatura y humedad.
+- **Módulo HX711** para el sistema de medición de peso.
+- **Módulo relé** para el accionamiento del bombillo.
+- **Ventilador** representado de forma equivalente.
+- **Panel de LEDs** para señalización del estado térmico.
 
-- leer temperatura y humedad desde el **DHT22**,
-- estimar el peso a partir de la lectura del **HX711**,
-- mostrar temperatura y peso en la **pantalla OLED**,
-- accionar el **bombillo** por medio del **relé** cuando la temperatura se encuentra por debajo del umbral definido,
-- activar el **ventilador** cuando la temperatura supera el límite superior,
-- encender el LED correspondiente según el estado térmico del sistema.
+Debido a las limitaciones propias del entorno de simulación, la etapa de potencia real compuesta por **transformador, bombillo de 120 V y ventilador alimentado externamente** se representó de forma conceptual o equivalente, manteniendo la misma lógica funcional del montaje físico. Esta simulación fue útil para documentar el sistema completo, validar su comportamiento lógico y complementar las evidencias del prototipo real.
 
-En términos de lógica de control, el sistema compara continuamente la temperatura medida con el rango objetivo de operación. Si la temperatura se encuentra por debajo del intervalo deseado, se activa el elemento calefactor; si supera el límite superior, se desactiva el calefactor y se habilita el ventilador. Cuando la temperatura se encuentra dentro del rango, el sistema indica condición normal mediante el LED verde.
-
-#### Diagrama de flujo / fragmento de código
-![Diagrama de flujo o captura del código principal](imagenes/diagrama_flujo_codigo.png)
-
----
-
-### Simulación del sistema en Wokwi
-Con el fin de documentar el diseño y validar de forma visual la lógica de control, se desarrolló una simulación funcional del sistema en **Wokwi**. En esta simulación se representaron los principales elementos del prototipo presentado en laboratorio:
-
-- **ESP32** como unidad de adquisición y control,
-- **pantalla OLED** para visualización de variables,
-- **sensor DHT22** para la medición de temperatura y humedad,
-- **módulo HX711** para la estimación del peso,
-- **módulo relé** para el accionamiento del bombillo,
-- **ventilador** representado de forma equivalente,
-- **panel de LEDs** para señalización del estado térmico.
-
-Debido a las limitaciones propias del entorno de simulación, la etapa de potencia real compuesta por **transformador, bombillo de 120 V y ventilador alimentado externamente** se representó de forma **conceptual o equivalente**, manteniendo la misma lógica funcional del prototipo físico. Esto permitió documentar de manera clara la relación entre sensores, microcontrolador, sistema de visualización y actuadores.
-
-La simulación permitió:
-- validar el comportamiento lógico del sistema,
-- documentar el circuito para el repositorio de GitHub,
-- evidenciar la integración de los módulos electrónicos utilizados,
-- complementar las fotografías del montaje real con una representación clara del sistema completo.
-
-#### Vista general de la simulación
 ![Vista general de la simulación en Wokwi](imagenes/simulacion_wokwi_general.png)
 
-#### Detalle de actuadores
-![Detalle del relé, bombillo y ventilador en simulación](imagenes/simulacion_wokwi_actuadores.png)
-
-#### Detalle de sensores y visualización
-![Detalle de OLED, DHT22 y HX711 en simulación](imagenes/simulacion_wokwi_sensores.png)
-
-#### Enlaces
-**Repositorio de GitHub:**  
-[Pegar aquí enlace del repositorio](PEGAR_AQUI_ENLACE_DEL_REPOSITORIO)
-
-**Simulación en Wokwi:**  
-[Pegar aquí enlace de la simulación](PEGAR_AQUI_ENLACE_DE_WOKWI)
+**Enlace a la simulación general:**  
+[Pegar aquí enlace de Wokwi - General](PEGAR_AQUI_ENLACE_WOKWI_GENERAL)
 
 ---
+
+### Explicación del código por secciones
+
+#### 1. Librerías utilizadas
+En esta sección se incluyen las librerías necesarias para el funcionamiento del sistema. Estas librerías permiten manejar la comunicación I2C con la pantalla OLED, realizar la lectura del sensor DHT22 y procesar la señal proveniente del módulo HX711. Gracias a estas herramientas, la ESP32 puede integrar sensado, visualización y control dentro de un mismo programa.
+
+#### 2. Definición de pines
+En esta parte del código se establecen los pines físicos de la ESP32 utilizados por cada elemento del sistema. Aquí se asignan los pines del sensor de temperatura, la pantalla OLED, los LEDs de estado, el ventilador, el relé y el módulo HX711. Esta organización facilita la identificación del hardware conectado y hace más clara la estructura del programa.
+
+#### 3. Configuración de la pantalla y de los sensores
+En esta sección se crean los objetos correspondientes a la pantalla OLED, el sensor DHT22 y el módulo HX711. Esto permite inicializar cada dispositivo y acceder posteriormente a sus funciones específicas, como la lectura de temperatura, humedad y peso, así como la visualización de datos en pantalla.
+
+#### 4. Umbrales de control
+Aquí se definen los valores de referencia del sistema, especialmente el rango de temperatura considerado adecuado para la incubadora. También se establecen los umbrales de activación y desactivación del ventilador y del calefactor, con el fin de evitar conmutaciones excesivas y hacer más estable la respuesta del sistema.
+
+#### 5. Variables globales del sistema
+En esta parte se declaran las variables que almacenan los datos medidos y el estado de los actuadores. Por ejemplo, se guardan la temperatura, la humedad, el peso estimado y el estado lógico del ventilador y del bombillo. Estas variables son fundamentales para que el sistema pueda tomar decisiones a partir de la información sensada.
+
+#### 6. Lectura de temperatura y humedad
+Esta sección del código se encarga de adquirir la información del sensor DHT22. La ESP32 consulta periódicamente la temperatura y la humedad del interior de la incubadora y almacena estos valores en variables que luego son usadas para control, visualización y monitoreo.
+
+#### 7. Lectura del sistema de peso
+Aquí se realiza la adquisición de la señal proveniente del módulo HX711. La lectura se procesa para estimar el peso aplicado sobre la celda de carga y así mostrarlo en la pantalla OLED. Esta sección representa el subsistema de pesaje del prototipo.
+
+#### 8. Control de LEDs de estado
+En esta parte del código se implementa la lógica que determina qué LED debe encenderse según la temperatura medida. Si la temperatura está por debajo del rango, se activa el LED de baja temperatura; si está dentro del rango, se activa el LED verde; y si está por encima, se activa el LED de alta temperatura.
+
+#### 9. Control del bombillo calefactor
+Esta sección contiene la lógica de activación del bombillo por medio del relé. Cuando la temperatura es baja, el sistema energiza el relé para encender el bombillo y aportar calor al interior de la cabina. Cuando la temperatura supera el límite superior, el relé se desactiva y el bombillo se apaga.
+
+#### 10. Control del ventilador
+Aquí se encuentra la lógica de enfriamiento del sistema. Cuando la temperatura supera el umbral superior, la ESP32 activa el ventilador para favorecer la circulación de aire y reducir la temperatura interna. Cuando la temperatura vuelve al rango esperado, el ventilador se apaga.
+
+#### 11. Visualización en pantalla OLED
+Esta sección organiza la información que se muestra en la pantalla OLED. Generalmente se presentan la temperatura, la humedad, el peso y el estado de los actuadores. Esto permite que el usuario observe en tiempo real el comportamiento del prototipo.
+
+#### 12. Inicialización del sistema
+En la función de inicialización se configuran los pines de entrada y salida, se inicia la comunicación con la pantalla OLED y los sensores, y se define el estado inicial seguro de los actuadores. Esta etapa es importante para garantizar que el sistema arranque de forma controlada.
+
+#### 13. Bucle principal de funcionamiento
+El bucle principal del programa ejecuta de manera repetitiva la lectura de sensores, la actualización del estado de los LEDs, el control del bombillo y del ventilador, y la visualización de datos. Gracias a esta estructura, el prototipo funciona como un sistema dinámico de monitoreo y control en tiempo real.
 
 ### Diseño de la Estructura
 Para realizar la estrutura, se empleo una caja de plástico, la cual se le quitó la tapa y se diseñó una cúpula con cartón y acetato, se le reliazaron unos cortes a la caja para tener una entrada del neonato y así mismo entradas más pequeñas para manipularlo sin necesidad de abrir la caja. También se le hizo el acondicionamiiento para posicionar el bombillo, el ventilador, la galga para medir el peso y el sensor de temperatura.
