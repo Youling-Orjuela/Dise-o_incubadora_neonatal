@@ -49,10 +49,11 @@ En esta simulación se incluyeron la **ESP32**, la **pantalla OLED** y el **mód
 
 Aunque la calibración del sistema en el montaje real presentó limitaciones, la simulación permitió documentar claramente la estructura del sistema de pesaje y su integración con el microcontrolador.
 
-![Simulación del sistema de peso con HX711](imagenes/simulacion_peso_wokwi.png)
+<img width="810" height="496" alt="image" src="https://github.com/user-attachments/assets/01c12997-0cb2-4c5b-82f8-8835659884ef" />
+
 
 **Enlace a la simulación de peso:**  
-[Pegar aquí enlace de Wokwi - Peso](PEGAR_AQUI_ENLACE_WOKWI_PESO)
+https://wokwi.com/projects/462156450476540929
 
 ---
 
@@ -68,11 +69,11 @@ Finalmente, se elaboró una simulación general del prototipo en **Wokwi**, inte
 
 Debido a las limitaciones propias del entorno de simulación, la etapa de potencia real compuesta por **transformador, bombillo de 120 V y ventilador alimentado externamente** se representó de forma conceptual o equivalente, manteniendo la misma lógica funcional del montaje físico. Esta simulación fue útil para documentar el sistema completo, validar su comportamiento lógico y complementar las evidencias del prototipo real.
 
-![Vista general de la simulación en Wokwi](imagenes/simulacion_wokwi_general.png)
+<img width="1477" height="595" alt="image" src="https://github.com/user-attachments/assets/9910ebc9-a02b-4bb3-b468-d32bce883ce1" />
+
 
 **Enlace a la simulación general:**  
-[Pegar aquí enlace de Wokwi - General](PEGAR_AQUI_ENLACE_WOKWI_GENERAL)
-
+https://wokwi.com/projects/462153338274913281
 ---
 
 ## Explicación del código de la incubadora neonatal
