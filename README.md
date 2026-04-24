@@ -74,47 +74,451 @@ Debido a las limitaciones propias del entorno de simulación, la etapa de potenc
 
 ---
 
-### Explicación del código por secciones
+## Explicación del código de la incubadora neonatal
 
-#### 1. Librerías utilizadas
-En esta sección se incluyen las librerías necesarias para el funcionamiento del sistema. Estas librerías permiten manejar la comunicación I2C con la pantalla OLED, realizar la lectura del sensor DHT22 y procesar la señal proveniente del módulo HX711. Gracias a estas herramientas, la ESP32 puede integrar sensado, visualización y control dentro de un mismo programa.
+## Librerías e instancias de hardware
+```cpp
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <DHT.h>
+#include "HX711.h"
 
-#### 2. Definición de pines
-En esta parte del código se establecen los pines físicos de la ESP32 utilizados por cada elemento del sistema. Aquí se asignan los pines del sensor de temperatura, la pantalla OLED, los LEDs de estado, el ventilador, el relé y el módulo HX711. Esta organización facilita la identificación del hardware conectado y hace más clara la estructura del programa.
+#define DHTPIN     4
+#define DHTTYPE    DHT22
 
-#### 3. Configuración de la pantalla y de los sensores
-En esta sección se crean los objetos correspondientes a la pantalla OLED, el sensor DHT22 y el módulo HX711. Esto permite inicializar cada dispositivo y acceder posteriormente a sus funciones específicas, como la lectura de temperatura, humedad y peso, así como la visualización de datos en pantalla.
+#define OLED_SDA   21
+#define OLED_SCL   22
 
-#### 4. Umbrales de control
-Aquí se definen los valores de referencia del sistema, especialmente el rango de temperatura considerado adecuado para la incubadora. También se establecen los umbrales de activación y desactivación del ventilador y del calefactor, con el fin de evitar conmutaciones excesivas y hacer más estable la respuesta del sistema.
+#define LED_OK     32
+#define LED_LOW    19
+#define LED_HIGH   25
 
-#### 5. Variables globales del sistema
-En esta parte se declaran las variables que almacenan los datos medidos y el estado de los actuadores. Por ejemplo, se guardan la temperatura, la humedad, el peso estimado y el estado lógico del ventilador y del bombillo. Estas variables son fundamentales para que el sistema pueda tomar decisiones a partir de la información sensada.
+#define FAN_PIN    33
+#define RELAY_PIN  13
 
-#### 6. Lectura de temperatura y humedad
-Esta sección del código se encarga de adquirir la información del sensor DHT22. La ESP32 consulta periódicamente la temperatura y la humedad del interior de la incubadora y almacena estos valores en variables que luego son usadas para control, visualización y monitoreo.
+#define HX_DT      26
+#define HX_SCK     27
 
-#### 7. Lectura del sistema de peso
-Aquí se realiza la adquisición de la señal proveniente del módulo HX711. La lectura se procesa para estimar el peso aplicado sobre la celda de carga y así mostrarlo en la pantalla OLED. Esta sección representa el subsistema de pesaje del prototipo.
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_ADDR 0x3C
 
-#### 8. Control de LEDs de estado
-En esta parte del código se implementa la lógica que determina qué LED debe encenderse según la temperatura medida. Si la temperatura está por debajo del rango, se activa el LED de baja temperatura; si está dentro del rango, se activa el LED verde; y si está por encima, se activa el LED de alta temperatura.
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+DHT dht(DHTPIN, DHTTYPE);
+HX711 scale;
+```
 
-#### 9. Control del bombillo calefactor
-Esta sección contiene la lógica de activación del bombillo por medio del relé. Cuando la temperatura es baja, el sistema energiza el relé para encender el bombillo y aportar calor al interior de la cabina. Cuando la temperatura supera el límite superior, el relé se desactiva y el bombillo se apaga.
+Este bloque declara las librerías necesarias para el funcionamiento del sistema y crea las instancias de los principales periféricos del prototipo.
 
-#### 10. Control del ventilador
-Aquí se encuentra la lógica de enfriamiento del sistema. Cuando la temperatura supera el umbral superior, la ESP32 activa el ventilador para favorecer la circulación de aire y reducir la temperatura interna. Cuando la temperatura vuelve al rango esperado, el ventilador se apaga.
+`Wire.h` es la librería estándar de Arduino para la comunicación I2C. Este protocolo utiliza dos líneas, `SDA` y `SCL`, y permite conectar dispositivos como la pantalla OLED con un número reducido de cables. En este proyecto se utiliza para establecer la comunicación entre la ESP32 y la pantalla.
 
-#### 11. Visualización en pantalla OLED
-Esta sección organiza la información que se muestra en la pantalla OLED. Generalmente se presentan la temperatura, la humedad, el peso y el estado de los actuadores. Esto permite que el usuario observe en tiempo real el comportamiento del prototipo.
+`Adafruit_GFX.h` y `Adafruit_SSD1306.h` permiten controlar la pantalla OLED. La primera ofrece funciones gráficas básicas, como escribir texto o dibujar elementos, mientras que la segunda implementa el controlador específico del display SSD1306.
 
-#### 12. Inicialización del sistema
-En la función de inicialización se configuran los pines de entrada y salida, se inicia la comunicación con la pantalla OLED y los sensores, y se define el estado inicial seguro de los actuadores. Esta etapa es importante para garantizar que el sistema arranque de forma controlada.
+`DHT.h` se utiliza para la lectura del sensor DHT22, el cual proporciona información de temperatura y humedad relativa. Estas variables son críticas dentro de la incubadora, ya que permiten conocer el estado térmico del ambiente interno.
 
-#### 13. Bucle principal de funcionamiento
-El bucle principal del programa ejecuta de manera repetitiva la lectura de sensores, la actualización del estado de los LEDs, el control del bombillo y del ventilador, y la visualización de datos. Gracias a esta estructura, el prototipo funciona como un sistema dinámico de monitoreo y control en tiempo real.
+`HX711.h` permite manejar el módulo HX711, encargado de acondicionar y digitalizar la señal proveniente de la celda de carga. Dado que la galga genera señales eléctricas muy pequeñas, este módulo es necesario para que la ESP32 pueda interpretar la medición de peso.
 
+En este mismo bloque se definen los pines físicos del sistema. Se asignan los pines del sensor DHT22, la pantalla OLED, los LEDs indicadores, el ventilador, el relé y el sistema de medición de peso.
+
+---
+
+## Umbrales y parámetros de control
+```cpp
+const float TEMP_LOW  = 36.0;
+const float TEMP_HIGH = 37.5;
+
+const float FAN_ON_TEMP  = 37.5;
+const float FAN_OFF_TEMP = 37.2;
+
+bool relayActiveLow = true;
+float calibration_factor = -359834.0;
+```
+
+Este bloque define los parámetros de referencia para el funcionamiento del sistema.
+
+`TEMP_LOW` y `TEMP_HIGH` delimitan el rango ideal de temperatura de la incubadora. Si la temperatura baja de 36 °C, se interpreta una condición de hipotermia. Si la temperatura supera 37.5 °C, el sistema considera una condición de sobrecalentamiento.
+
+`FAN_ON_TEMP` y `FAN_OFF_TEMP` establecen la histéresis del ventilador. Esto significa que el ventilador no se activa y desactiva exactamente en el mismo valor, lo cual evita conmutaciones rápidas y mejora la estabilidad del sistema.
+
+La variable `relayActiveLow` indica que el relé utilizado se activa con nivel lógico bajo. Finalmente, `calibration_factor` corresponde al factor de calibración experimental del módulo HX711, el cual se emplea para convertir la lectura de la celda de carga en una estimación de peso.
+
+---
+
+## Variables globales del sistema
+```cpp
+float temperature = NAN;
+float humidity    = NAN;
+float weight_kg   = 0.0;
+long  weight_raw  = 0;
+
+bool fanState    = false;
+bool heaterState = false;
+bool hxReady     = false;
+```
+
+En esta sección se declaran las variables globales que almacenan el estado actual del sistema.
+
+`temperature` y `humidity` guardan las lecturas del sensor DHT22. Se inicializan como `NAN` para indicar que al comienzo del programa aún no existe una lectura válida.
+
+`weight_kg` almacena el peso calculado en kilogramos, mientras que `weight_raw` conserva la lectura cruda del HX711 para fines de depuración.
+
+`fanState` y `heaterState` representan el estado del ventilador y del bombillo calefactor, respectivamente. `hxReady` verifica si el módulo HX711 fue inicializado correctamente y está listo para trabajar.
+
+---
+
+## Función de control de LEDs
+```cpp
+void setLEDs(bool okLed, bool lowLed, bool highLed) {
+  digitalWrite(LED_OK, okLed ? HIGH : LOW);
+  digitalWrite(LED_LOW, lowLed ? HIGH : LOW);
+  digitalWrite(LED_HIGH, highLed ? HIGH : LOW);
+}
+```
+
+Esta función simplifica el control del panel de LEDs del sistema.
+
+Recibe tres parámetros booleanos, uno para cada LED: temperatura normal, temperatura baja y temperatura alta. Dependiendo de estos valores, la función enciende o apaga cada indicador mediante `digitalWrite()`.
+
+Desde el punto de vista funcional, esta sección corresponde a la capa de señalización visual del prototipo, permitiendo mostrar rápidamente el estado térmico de la incubadora.
+
+---
+
+## Función de control del relé
+```cpp
+void setRelay(bool on) {
+  heaterState = on;
+  if (relayActiveLow) {
+    digitalWrite(RELAY_PIN, on ? LOW : HIGH);
+  } else {
+    digitalWrite(RELAY_PIN, on ? HIGH : LOW);
+  }
+}
+```
+
+Esta función controla el relé encargado de accionar el bombillo calefactor.
+
+El parámetro `on` indica si el calefactor debe encenderse o apagarse. Como el módulo relé utilizado trabaja con lógica activa en bajo, cuando se desea encender el bombillo se escribe `LOW` en el pin de control. Si el relé trabajara con lógica activa en alto, la función usaría la condición contraria.
+
+Además de cambiar el estado físico del relé, la función actualiza la variable `heaterState`, lo cual permite reflejar el estado del calefactor en la pantalla OLED y en el monitor serial.
+
+---
+
+## Función para clasificar el estado térmico
+```cpp
+const char* estadoTermico(float t) {
+  if (isnan(t)) return "ERROR";
+  if (t < TEMP_LOW) return "BAJA";
+  if (t > TEMP_HIGH) return "ALTA";
+  return "NORMAL";
+}
+```
+
+Esta función clasifica la temperatura medida en una categoría fácilmente interpretable por el usuario.
+
+Si la lectura no es válida, devuelve `ERROR`. Si la temperatura está por debajo del rango establecido, devuelve `BAJA`. Si la temperatura supera el límite superior, devuelve `ALTA`. En caso contrario, devuelve `NORMAL`.
+
+Esta abstracción permite traducir un valor numérico en una descripción textual del estado térmico del sistema.
+
+---
+
+## Actualización automática de LEDs
+```cpp
+void actualizarLEDs(float t) {
+  if (isnan(t)) {
+    setLEDs(false, false, false);
+  } else if (t < TEMP_LOW) {
+    setLEDs(false, true, false);
+  } else if (t > TEMP_HIGH) {
+    setLEDs(false, false, true);
+  } else {
+    setLEDs(true, false, false);
+  }
+}
+```
+
+Esta función traduce la temperatura medida en una señal visual inmediata.
+
+Si la temperatura está por debajo del rango, se activa el LED de baja temperatura. Si está por encima del rango, se activa el LED de alta temperatura. Si la temperatura se encuentra dentro del intervalo deseado, se enciende el LED verde de condición normal.
+
+Con esto, el usuario puede identificar rápidamente el estado de la incubadora sin necesidad de leer la pantalla.
+
+---
+
+## Lectura del sensor DHT22
+```cpp
+void leerDHT() {
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+
+  if (!isnan(t)) temperature = t;
+  if (!isnan(h)) humidity = h;
+}
+```
+
+Esta rutina se encarga de adquirir la información del sensor DHT22.
+
+La ESP32 consulta periódicamente la temperatura y la humedad del ambiente interno del prototipo. Si las lecturas son válidas, estas se almacenan en las variables globales `temperature` y `humidity`.
+
+Esto permite que el sistema use estos datos tanto para control como para visualización.
+
+---
+
+## Control del ventilador
+```cpp
+void actualizarVentilador(float t) {
+  if (isnan(t)) {
+    fanState = false;
+  } else {
+    if (t >= FAN_ON_TEMP) {
+      fanState = true;
+    } else if (t <= FAN_OFF_TEMP) {
+      fanState = false;
+    }
+  }
+
+  digitalWrite(FAN_PIN, fanState ? HIGH : LOW);
+}
+```
+
+Esta función implementa la lógica de enfriamiento del sistema.
+
+Cuando la temperatura supera el umbral superior, el ventilador se activa para ayudar a disipar calor dentro de la incubadora. Cuando la temperatura vuelve a un valor seguro, el ventilador se apaga.
+
+El uso de dos umbrales distintos introduce histéresis, lo cual evita oscilaciones rápidas del actuador y mejora la estabilidad del control.
+
+---
+
+## Control del bombillo calefactor
+```cpp
+void actualizarBombillo(float t) {
+  if (isnan(t)) {
+    setRelay(false);
+    return;
+  }
+
+  if (t < TEMP_HIGH) setRelay(true);
+  else               setRelay(false);
+}
+```
+
+Esta función gestiona el calentamiento del sistema.
+
+Si la temperatura es menor al umbral superior, el bombillo calefactor permanece encendido. Si la temperatura supera ese límite, el relé se desactiva y el bombillo se apaga.
+
+Este bloque representa la acción del calefactor dentro del lazo de control térmico de la incubadora.
+
+---
+
+## Inicialización del HX711
+```cpp
+void iniciarHX711() {
+  scale.begin(HX_DT, HX_SCK);
+  delay(3000);
+
+  if (scale.is_ready()) {
+    scale.tare(20);
+    scale.set_scale(calibration_factor);
+    hxReady = true;
+    Serial.println("HX711 listo");
+  } else {
+    hxReady = false;
+    Serial.println("HX711 no responde");
+  }
+}
+```
+
+Este bloque inicia la comunicación con el módulo HX711 y verifica si el sistema de pesaje está disponible.
+
+Si la inicialización es exitosa, se aplica el factor de calibración y se realiza una tara inicial. Esto permite que las mediciones posteriores representen únicamente la carga aplicada y no el peso propio de la estructura.
+
+Si el módulo no responde, el sistema informa la falla y evita usar lecturas no confiables.
+
+---
+
+## Lectura del peso
+```cpp
+void leerPeso() {
+  if (!hxReady) return;
+  if (!scale.is_ready()) return;
+
+  weight_raw = scale.read_average(10);
+
+  float w = scale.get_units(5);
+
+  if (w < 0) w = -w;
+  if (w < 0.01) w = 0.0;
+
+  weight_kg = w;
+}
+```
+
+Esta función realiza la lectura del sistema de pesaje.
+
+Primero verifica que el HX711 esté correctamente inicializado. Luego toma una lectura promedio y la convierte a kilogramos usando el factor de calibración. También almacena una lectura cruda para fines de depuración.
+
+Finalmente, corrige pequeñas fluctuaciones cercanas a cero para evitar mostrar ruido como si fuera peso real.
+
+---
+
+## Visualización en pantalla OLED
+```cpp
+void mostrarOLED() {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+
+  display.println("Incubadora neonatal");
+  display.println("-------------------");
+
+  display.print("Temp: ");
+  if (isnan(temperature)) display.println("ERROR");
+  else {
+    display.print(temperature, 1);
+    display.println(" C");
+  }
+
+  display.print("Hum : ");
+  if (isnan(humidity)) display.println("ERROR");
+  else {
+    display.print(humidity, 1);
+    display.println(" %");
+  }
+
+  display.print("Peso: ");
+  display.print(weight_kg, 3);
+  display.println(" kg");
+
+  display.print("Estado: ");
+  display.println(estadoTermico(temperature));
+
+  display.print("Fan: ");
+  display.println(fanState ? "ON" : "OFF");
+
+  display.print("Bomb: ");
+  display.println(heaterState ? "ON" : "OFF");
+
+  display.display();
+}
+```
+
+Esta función organiza toda la información relevante del sistema en la pantalla OLED.
+
+En ella se muestran temperatura, humedad, peso, estado térmico y estado de los actuadores. Esto permite que el usuario observe en tiempo real el comportamiento de la incubadora sin recurrir al computador.
+
+---
+
+## Visualización por monitor serial
+```cpp
+void mostrarSerial() {
+  Serial.println("---------------");
+
+  Serial.print("Temp: ");
+  if (isnan(temperature)) Serial.println("ERROR");
+  else {
+    Serial.print(temperature, 2);
+    Serial.println(" C");
+  }
+
+  Serial.print("Hum : ");
+  if (isnan(humidity)) Serial.println("ERROR");
+  else {
+    Serial.print(humidity, 2);
+    Serial.println(" %");
+  }
+
+  Serial.print("RAW: ");
+  Serial.print(weight_raw);
+  Serial.print(" | Peso: ");
+  Serial.print(weight_kg, 3);
+  Serial.println(" kg");
+
+  Serial.print("Estado: ");
+  Serial.println(estadoTermico(temperature));
+
+  Serial.print("Ventilador: ");
+  Serial.println(fanState ? "ON" : "OFF");
+
+  Serial.print("Bombillo: ");
+  Serial.println(heaterState ? "ON" : "OFF");
+}
+```
+
+Además de la OLED, el sistema también envía información al monitor serial. Esto facilita la depuración del prototipo y permite observar con mayor detalle las variables internas, como la lectura cruda del HX711.
+
+---
+
+## Configuración inicial del sistema (`setup`)
+```cpp
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+
+  pinMode(LED_OK, OUTPUT);
+  pinMode(LED_LOW, OUTPUT);
+  pinMode(LED_HIGH, OUTPUT);
+  setLEDs(false, false, false);
+
+  pinMode(FAN_PIN, OUTPUT);
+  digitalWrite(FAN_PIN, LOW);
+
+  pinMode(RELAY_PIN, OUTPUT);
+  setRelay(false);
+
+  Wire.begin(OLED_SDA, OLED_SCL);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+    Serial.println("OLED no encontrada");
+    while (true) delay(1000);
+  }
+
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println("INCUBADORA UMNG");
+  display.println("Inicializando...");
+  display.display();
+
+  dht.begin();
+  delay(500);
+
+  iniciarHX711();
+
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println("INCUBADORA UMNG");
+  display.println("Lista!");
+  display.display();
+  delay(1000);
+}
+```
+
+La función `setup()` se ejecuta una sola vez al iniciar el sistema. En ella se configuran los pines de entrada y salida, se inicializa la comunicación con la OLED, el DHT22 y el HX711, y se define el estado seguro inicial de los actuadores.
+
+Esta etapa es fundamental porque garantiza que el sistema arranque en condiciones controladas y que todos los periféricos estén correctamente listos antes de iniciar el lazo principal.
+
+---
+
+## Bucle principal de funcionamiento (`loop`)
+```cpp
+void loop() {
+  leerDHT();
+  leerPeso();
+
+  actualizarLEDs(temperature);
+  actualizarVentilador(temperature);
+  actualizarBombillo(temperature);
+
+  mostrarOLED();
+  mostrarSerial();
+
+  delay(800);
+}
+```
+
+La función `loop()` constituye el ciclo principal de ejecución del sistema. En cada iteración se leen los sensores, se actualiza la lógica de control y se muestran los resultados tanto en la OLED como en el monitor serial.
+
+Este ciclo repetitivo convierte a la incubadora en un sistema dinámico de monitoreo y control en tiempo real.
+```
 ### Diseño de la Estructura
 Para realizar la estrutura, se empleo una caja de plástico, la cual se le quitó la tapa y se diseñó una cúpula con cartón y acetato, se le reliazaron unos cortes a la caja para tener una entrada del neonato y así mismo entradas más pequeñas para manipularlo sin necesidad de abrir la caja. También se le hizo el acondicionamiiento para posicionar el bombillo, el ventilador, la galga para medir el peso y el sensor de temperatura.
 
