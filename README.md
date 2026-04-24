@@ -1,4 +1,4 @@
-# Diseno incubador neonatal
+# Diseno incubadora neonatal
 
 ## Introducción
 La incubadora neonatal es un dispositivo médico diseñado para replicar, en la medida de lo posible, las condiciones del ambiente intrauterino, con el fin de garantizar la supervivencia y el desarrollo óptimo del recién nacido, especialmente en casos de prematuridad o bajo peso al nacer [1][2]. Su función principal consiste en regular de forma precisa variables fisiológicamente críticas como la temperatura, la humedad y el flujo de aire al interior de la cabina, creando un entorno térmico neutro que minimice el gasto energético del neonato y favorezca su homeostasis [3].
@@ -139,7 +139,10 @@ Incorporando la estructura y todo el sistema electrónico en una cajita al ldao,
 #### Evidencia de estado por temperatura alta
 [![Alta.jpg](https://i.postimg.cc/zfMmMf3F/Alta.jpg)](https://postimg.cc/B8xwP4Tj)
 
----
+## Análisis de Costos de Implementación
+El sistema de incubadora neonatal a escala desarrollado presenta un costo total aproximado de $200.000 COP. Este valor se puede discriminar en dos grandes componentes: electrónicos y de diseño. Para esto, se tiene que en los componentes electrónicos (estos incluyen todos los sensores, resistencias, transformador, capacitores, ventilador y demás) el gasto fue de aproximadamente $150.000 COP, mientras que a nivel de diseño (caja plástica, cinta, cartón piedra, entre otros) se gastó $50.000 COP. 
+
+Las incubadoras neonatales comerciales presentan características mucho más avanzadas, lo cual impacta directamente su costo. La empresa Dräger fabrica incubadoras de alta gama como la serie Isolette, llegando a costar mas de 100 millones COP. Por su parte, Instrumentalia S.A.S, tiene incubadoras para Colombia a partir de los 50 millones COP. LEEX Medical es la empresa mas accesible, ofreciendo incubadoras neonatales a partir de los 20 millones COP.
 
 ## Análisis
 ### Pregunta 1: ¿Qué otras variables son críticas en el monitoreo neonatal?
