@@ -38,7 +38,7 @@ Esta simulación permitió comprobar de forma visual la interacción entre el se
 
 
 **Enlace a la simulación de temperatura:**  
-[[Pegar aquí enlace de Wokwi - Temperatura]((https://wokwi.com/projects/462155404758716417))](https://wokwi.com/projects/462155404758716417)
+https://wokwi.com/projects/462155404758716417
 
 ---
 
