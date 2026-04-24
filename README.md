@@ -34,10 +34,11 @@ La lógica implementada permite identificar tres estados térmicos:
 
 Esta simulación permitió comprobar de forma visual la interacción entre el sensor de temperatura, la unidad de control y los actuadores del sistema.
 
-![Simulación del circuito de temperatura en Wokwi](imagenes/simulacion_temperatura_wokwi.png)
+<img width="776" height="526" alt="image" src="https://github.com/user-attachments/assets/c68bc2f1-49a8-4a8d-ad04-c687fc074c6c" />
+
 
 **Enlace a la simulación de temperatura:**  
-[Pegar aquí enlace de Wokwi - Temperatura](PEGAR_AQUI_ENLACE_WOKWI_TEMPERATURA)
+[Pegar aquí enlace de Wokwi - Temperatura]((https://wokwi.com/projects/462155404758716417))
 
 ---
 
