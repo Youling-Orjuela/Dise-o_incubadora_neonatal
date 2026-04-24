@@ -520,12 +520,9 @@ void loop() {
 La función `loop()` constituye el ciclo principal de ejecución del sistema. En cada iteración se leen los sensores, se actualiza la lógica de control y se muestran los resultados tanto en la OLED como en el monitor serial.
 
 Este ciclo repetitivo convierte a la incubadora en un sistema dinámico de monitoreo y control en tiempo real.
-```
+
 ### Diseño de la Estructura
 Para realizar la estrutura, se empleo una caja de plástico, la cual se le quitó la tapa y se diseñó una cúpula con cartón y acetato, se le reliazaron unos cortes a la caja para tener una entrada del neonato y así mismo entradas más pequeñas para manipularlo sin necesidad de abrir la caja. También se le hizo el acondicionamiiento para posicionar el bombillo, el ventilador, la galga para medir el peso y el sensor de temperatura.
-
-#### Diseño estructural
-![Diseño estructural de la incubadora](imagenes/diseno_estructura.jpg)
 
 ### Diseño final
 Incorporando la estructura y todo el sistema electrónico en una cajita al ldao, donde por uno de los laterales se puede visualizar por mmedio de una Oled los valores de temperatura y peso; Por medio de LEDs indicar la situación en la que se ecnuentra el neonato dependiendo su temperatura, siendo así el azul un estado de baja temperatura <36°C, verde el estado ideal de la incubadora donde la temperatura oscila entre los 36 y 37.5°C y rojo ya una temperatura superior a esta que podría llegar a calentar de más al neonato.
